@@ -28,10 +28,6 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
   const [settings, setSettings] = useState({
     anniversary_date: '',
     discord_webhook: '',
-    telegram_token: '',
-    telegram_chat_id: '',
-    drive_folder_id: '',
-    music_drive_folder_id: '',
     timeline_greeting: '¡Bienvenido a nuestro álbum especial de recuerdos! ♡',
     anniversary_message: '¡Feliz Aniversario mi amor!',
     default_song_url: '',
@@ -158,10 +154,6 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
           ...prev,
           anniversary_date: data.anniversary_date || '',
           discord_webhook: data.discord_webhook || '',
-          telegram_token: data.telegram_token || '',
-          telegram_chat_id: data.telegram_chat_id || '',
-          drive_folder_id: data.drive_folder_id || '',
-          music_drive_folder_id: data.music_drive_folder_id || '',
           timeline_greeting: data.timeline_greeting || '¡Bienvenido a nuestro álbum especial de recuerdos! ♡',
           anniversary_message: data.anniversary_message || '¡Feliz Aniversario mi amor!',
           default_song_url: data.default_song_url || '',
@@ -470,31 +462,6 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
               />
             </div>
 
-            <div>
-              <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                📁 GOOGLE DRIVE FOLDER ID (Galería)
-              </label>
-              <input
-                type="text"
-                value={settings.drive_folder_id}
-                onChange={(e) => setSettings({ ...settings, drive_folder_id: e.target.value })}
-                placeholder="Folder ID de fotos"
-                className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                🎵 CARPETA DRIVE PARA MÚSICA (subidas)
-              </label>
-              <input
-                type="text"
-                value={settings.music_drive_folder_id}
-                onChange={(e) => setSettings({ ...settings, music_drive_folder_id: e.target.value })}
-                placeholder="Folder ID para audios/portadas (opcional)"
-                className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
-              />
-            </div>
           </div>
 
           <h3 className="font-retro text-[9px] text-pastel-pink-light border-b border-slate-800 pb-2 flex items-center gap-1.5 pt-2">
@@ -565,33 +532,6 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                  🤖 TELEGRAM BOT TOKEN
-                </label>
-                <input
-                  type="text"
-                  value={settings.telegram_token}
-                  onChange={(e) => setSettings({ ...settings, telegram_token: e.target.value })}
-                  placeholder="Bot Token"
-                  className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                  💬 TELEGRAM CHAT ID
-                </label>
-                <input
-                  type="text"
-                  value={settings.telegram_chat_id}
-                  onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
-                  placeholder="Chat ID (e.g. -100123...)"
-                  className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Test de Webhook */}

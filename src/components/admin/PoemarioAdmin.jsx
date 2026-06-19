@@ -14,6 +14,14 @@ const EMPTY_CARTA = () => ({
   is_published: true,
 });
 
+const normalizeCartas = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.cartas)) return payload.cartas;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
 export default function PoemarioAdmin() {
   const token = useStore((s) => s.token);
   const [cartas, setCartas] = useState([]);
@@ -32,10 +40,18 @@ export default function PoemarioAdmin() {
   const loadCartas = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/all`, { headers: headers() });
-      if (res.ok) setCartas(await res.json());
+      const tryFetch = async (url) => {
+        const res = await fetch(url, { headers: headers() });
+        if (!res.ok) return null;
+        const payload = await res.json().catch(() => null);
+        return payload;
+      };
+
+      const payload = await tryFetch(API) ?? await tryFetch(`${API}/all`);
+      setCartas(normalizeCartas(payload));
     } catch (e) {
-      console.error(e);
+      console.error('Error al cargar cartas:', e);
+      setCartas([]);
     } finally {
       setLoading(false);
     }
@@ -60,22 +76,23 @@ export default function PoemarioAdmin() {
     playPop();
 
     try {
+      const payload = {
+        title: editing.title.trim(),
+        content: editing.content,
+        polaroid_image: editing.polaroid_image?.trim() || null,
+        is_published: editing.is_published !== false,
+      };
       const isNew = !editing.id;
       const res = await fetch(isNew ? API : `${API}/${editing.id}`, {
         method: isNew ? 'POST' : 'PUT',
         headers: headers(),
-        body: JSON.stringify({
-          title: editing.title.trim(),
-          content: editing.content,
-          polaroid_image: editing.polaroid_image?.trim() || null,
-          is_published: editing.is_published !== false,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         playSuccess();
         setEditing(null);
-        loadCartas();
+        await loadCartas();
       } else {
         playError();
         alert('Error al guardar la carta.');
@@ -94,15 +111,24 @@ export default function PoemarioAdmin() {
       const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: headers() });
       if (res.ok) {
         playSuccess();
-        loadCartas();
+        await loadCartas();
         if (editing?.id === id) setEditing(null);
-      } else playError();
+      } else {
+        playError();
+      }
     } catch {
       playError();
     }
   };
 
-  const stripHtml = (html) => html.replace(/<[^>]*>/g, '').substring(0, 80);
+  const stripHtml = (html = '') => {
+    const clean = String(html || '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return clean.substring(0, 80);
+  };
 
   return (
     <div className="space-y-6">
