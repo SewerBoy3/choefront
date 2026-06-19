@@ -11,7 +11,7 @@ import MemoryGallery from './components/MemoryGallery';
 import AdminPanel    from './components/AdminPanel';
 import SecretGame    from './components/SecretGame';
 import TetrisGame    from './components/TetrisGame';
-import OurHistory    from './components/OurHistory';
+import Poemario      from './components/Poemario';
 import CustomCursor  from './components/CustomCursor';
 import Login         from './components/Login';
 import MagneticButton from './components/MagneticButton';
@@ -31,7 +31,7 @@ const pageTransition = { duration: 0.18, ease: 'easeInOut' };
 // ─────────────────────────────────────────────────────────────────
 // MENÚ PRINCIPAL
 // ─────────────────────────────────────────────────────────────────
-function MainApp({ user, onLogout, anniversaryDate, driveFiles, driveLoading, driveError, onUpdateData, publicSettings }) {
+function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings }) {
   const [activeTab, setActiveTab] = useState('timeline');
   const points = useStore((state) => state.points);
 
@@ -41,7 +41,7 @@ function MainApp({ user, onLogout, anniversaryDate, driveFiles, driveLoading, dr
     { id: 'music',    name: 'Música',    icon: Music      },
     { id: 'coupons',  name: 'Vales',     icon: Gift       },
     { id: 'gallery',  name: 'Galería',   icon: ImageIcon  },
-    { id: 'history',  name: 'Nosotros',  icon: Book       },
+    { id: 'history',  name: 'Poemario',  icon: Book       },
     { id: 'admin',    name: 'Admin',     icon: Settings,   adminOnly: true },
   ];
 
@@ -122,8 +122,8 @@ function MainApp({ user, onLogout, anniversaryDate, driveFiles, driveLoading, dr
             {activeTab === 'timeline' && <Timeline anniversaryDate={anniversaryDate} />}
             {activeTab === 'music'    && <MusicRoom />}
             {activeTab === 'coupons'  && <CouponGallery />}
-            {activeTab === 'gallery'  && <MemoryGallery files={driveFiles} loading={driveLoading} error={driveError} />}
-            {activeTab === 'history'  && <OurHistory />}
+            {activeTab === 'gallery'  && <MemoryGallery />}
+            {activeTab === 'history'  && <Poemario />}
             {activeTab === 'admin' && user?.role === 'admin' && (
               <AdminPanel onUpdateData={onUpdateData} adminUser={user?.username} />
             )}
@@ -155,30 +155,24 @@ export default function App() {
   const [isGlitching,     setIsGlitching]     = useState(false);
   const [glitchText,      setGlitchText]       = useState('');
   const [anniversaryDate, setAnniversaryDate]  = useState('2023-09-15');
-  const [driveFiles,      setDriveFiles]       = useState([]);
-  const [driveLoading,    setDriveLoading]     = useState(true);
-  const [driveError,      setDriveError]       = useState(null);
   const [publicSettings,  setPublicSettings]   = useState({});
   const setMusicSettings = useStore((s) => s.setMusicSettings);
 
   const loadDynamicData = useCallback(async () => {
-    setDriveLoading(true);
     try {
-      const [driveRes, annivRes, settingsRes] = await Promise.all([
-        fetch(`${API_BASE}/drive/files`),
+      const [annivRes, settingsRes] = await Promise.all([
         fetch(`${API_BASE}/anniversary`),
         fetch(`${API_BASE}/public-settings`),
       ]);
-      if (driveRes.ok)  setDriveFiles(await driveRes.json());
       if (annivRes.ok)  setAnniversaryDate((await annivRes.json()).anniversary_date);
       if (settingsRes.ok) {
         const settings = await settingsRes.json();
         setPublicSettings(settings);
         setMusicSettings(settings);
       }
-      setDriveError(null);
-    } catch (e) { setDriveError(e.message); }
-    finally { setDriveLoading(false); }
+    } catch (e) {
+      console.error('Error al cargar datos dinámicos:', e);
+    }
   }, [setMusicSettings]);
 
   useEffect(() => {
@@ -263,9 +257,6 @@ export default function App() {
               user={user}
               onLogout={handleLogout}
               anniversaryDate={anniversaryDate}
-              driveFiles={driveFiles}
-              driveLoading={driveLoading}
-              driveError={driveError}
               onUpdateData={loadDynamicData}
               publicSettings={publicSettings}
             />

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Gift, Save, Plus, Trash2, RotateCcw, ShieldCheck, Database, Sliders, Bell, MessageSquare, Gamepad2, Send, Info, Lock, Music, Coins, Sparkles } from 'lucide-react';
+import { Settings, Gift, Save, Plus, Trash2, RotateCcw, ShieldCheck, Database, Sliders, Bell, MessageSquare, Gamepad2, Send, Info, Lock, Music, Coins, Sparkles, Image, BookOpen } from 'lucide-react';
 import { playPop, playSuccess, playError, playTick } from '../utils/sounds';
 import useStore from '../store/useStore';
 import MusicAdmin from './admin/MusicAdmin';
+import GalleryAdmin from './admin/GalleryAdmin';
+import PoemarioAdmin from './admin/PoemarioAdmin';
 
 const API_ADMIN_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin`;
 const API_COUPONS_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/coupons`;
@@ -407,6 +409,30 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
         >
           <Music className="w-3 h-3 inline mr-1" />
           MÚSICA
+        </button>
+
+        <button
+          onClick={() => { playTick(); setAdminTab('gallery'); }}
+          className={`font-retro text-[8px] px-3 py-2 border-2 transition-all ${
+            adminTab === 'gallery'
+              ? 'bg-white text-black border-black shadow-[2px_2px_0_#000]'
+              : 'bg-transparent text-slate-400 border-slate-700 hover:border-white hover:text-white'
+          }`}
+        >
+          <Image className="w-3 h-3 inline mr-1" />
+          GALERÍA
+        </button>
+
+        <button
+          onClick={() => { playTick(); setAdminTab('poemario'); }}
+          className={`font-retro text-[8px] px-3 py-2 border-2 transition-all ${
+            adminTab === 'poemario'
+              ? 'bg-white text-black border-black shadow-[2px_2px_0_#000]'
+              : 'bg-transparent text-slate-400 border-slate-700 hover:border-white hover:text-white'
+          }`}
+        >
+          <BookOpen className="w-3 h-3 inline mr-1" />
+          POEMARIO
         </button>
 
         <button
@@ -829,9 +855,16 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
         </form>
       )}
 
-      {/* CONTENIDO DE TAB 4: AJUSTES JUEGOS */}
       {adminTab === 'music' && (
         <MusicAdmin onUpdateData={onUpdateData} />
+      )}
+
+      {adminTab === 'gallery' && (
+        <GalleryAdmin />
+      )}
+
+      {adminTab === 'poemario' && (
+        <PoemarioAdmin />
       )}
 
       {adminTab === 'games' && (

@@ -123,3 +123,83 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #ffd1dc;
 }
+
+/* ── Prose styles for Poemario letter content ── */
+.prose-letter {
+  color: #cbd5e1;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+
+.prose-letter h1,
+.prose-letter h2,
+.prose-letter h3 {
+  font-family: 'Press Start 2P', monospace;
+  color: #fff;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.prose-letter h1 { font-size: 0.75rem; }
+.prose-letter h2 { font-size: 0.625rem; }
+.prose-letter h3 { font-size: 0.5rem; color: #FFB6C1; }
+
+.prose-letter p {
+  margin-bottom: 1em;
+}
+
+.prose-letter strong, .prose-letter b {
+  color: #fff;
+  font-weight: 700;
+}
+
+.prose-letter em, .prose-letter i {
+  color: #FFB6C1;
+  font-style: italic;
+}
+
+.prose-letter a {
+  color: #AEC6CF;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.prose-letter a:hover {
+  color: #FFB6C1;
+}
+
+.prose-letter ul, .prose-letter ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prose-letter ul { list-style: disc; }
+.prose-letter ol { list-style: decimal; }
+
+.prose-letter li {
+  margin-bottom: 0.25em;
+}
+
+.prose-letter img {
+  max-width: 100%;
+  border: 3px solid #fff;
+  margin: 1em auto;
+  display: block;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+}
+
+.prose-letter blockquote {
+  border-left: 4px solid #FFB6C1;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #D8BFD8;
+  font-style: italic;
+}
+
+.prose-letter hr {
+  border: none;
+  border-top: 2px dashed rgba(255,255,255,0.15);
+  margin: 1.5em 0;
+}
