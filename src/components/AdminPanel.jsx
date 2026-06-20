@@ -471,22 +471,9 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="md:col-span-2">
                 <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                  🔗 DISCORD WEBHOOK URL (Canal Público / Fallback)
-                </label>
-                <input
-                  type="url"
-                  value={settings.discord_webhook}
-                  onChange={(e) => setSettings({ ...settings, discord_webhook: e.target.value })}
-                  placeholder="https://discord.com/api/webhooks/..."
-                  className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-retro text-[7px] text-slate-400 mb-2">
-                  🤖 DISCORD BOT TOKEN (Para DMs 100% Privados)
+                  🤖 DISCORD BOT TOKEN (Para Notificaciones Privadas)
                 </label>
                 <input
                   type="text"
@@ -496,9 +483,7 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
                   className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-retro text-[7px] text-slate-400 mb-2">
                   👤 ID DE DISCORD DE FER (Ping al Admin)
@@ -511,7 +496,7 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
                   className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
                 />
                 <p className="font-retro text-[5px] text-slate-500 mt-1">
-                  ID numérico para que te haga ping cuando Zoe canjee un vale.
+                  ID numérico para que te mande DM cuando Zoe canjee un vale.
                 </p>
               </div>
 
@@ -527,21 +512,21 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
                   className="w-full px-3 py-2 border-2 border-slate-700 bg-transparent text-white font-sans text-xs focus:border-white focus:outline-none"
                 />
                 <p className="font-retro text-[5px] text-slate-500 mt-1">
-                  ID numérico para que le haga ping cuando le agregues monedas o vales.
+                  ID numérico para que le mande DM cuando le agregues monedas o vales.
                 </p>
               </div>
             </div>
 
           </div>
 
-          {/* Test de Webhook */}
+          {/* Test de Bot de Discord */}
           <div className="bg-[#2a223a]/30 p-4 border border-slate-800 space-y-3">
             <h4 className="font-retro text-[8px] text-white flex items-center gap-1.5">
               <Send className="w-3.5 h-3.5 text-pastel-blue" />
-              PROBAR CONEXIÓN DE NOTIFICACIÓN
+              PROBAR BOT DE DISCORD
             </h4>
             <p className="font-retro text-[6px] text-slate-400">
-              Presiona el botón para disparar un mensaje de prueba a los servicios configurados.
+              Presiona el botón para intentar enviar un mensaje de prueba privado a cada usuario (Fer y Zoe).
             </p>
             <div className="flex flex-col sm:flex-row gap-3 items-center">
               <button
@@ -549,7 +534,7 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
                 onClick={handleTestNotification}
                 className="retro-btn text-[8px] py-1.5 px-3 bg-pastel-blue text-black"
               >
-                PROBAR WEBHOOKS
+                PROBAR MENSAJES PRIVADOS
               </button>
               {testResult && (
                 <span className="font-retro text-[7px] text-yellow-300 animate-pulse">
