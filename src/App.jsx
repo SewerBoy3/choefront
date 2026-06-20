@@ -18,6 +18,7 @@ import MagneticButton from './components/MagneticButton';
 import useSecretCode from './hooks/useSecretCode';
 import { playSwoosh, playTick, playSuccess, playPop } from './utils/sounds';
 import useStore      from './store/useStore';
+import confetti      from 'canvas-confetti';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -31,11 +32,12 @@ const pageTransition = { duration: 0.18, ease: 'easeInOut' };
 // ─────────────────────────────────────────────────────────────────
 // MENÚ PRINCIPAL
 // ─────────────────────────────────────────────────────────────────
-function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings }) {
-  const [activeTab, setActiveTab] = useState('timeline');
+function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings, onSigma, onTretis }) {
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('choe_active_tab') || 'timeline';
+  });
   const points = useStore((state) => state.points);
 
-  // Filtrar pestañas: la pestaña Admin solo se muestra si el rol es 'admin' (fer)
   const allTabs = [
     { id: 'timeline', name: 'Historia',  icon: Calendar   },
     { id: 'music',    name: 'Música',    icon: Music      },
@@ -49,63 +51,72 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
 
   const handleTab = (id) => {
     playSwoosh();
+    sessionStorage.setItem('choe_active_tab', id);
     setActiveTab(id);
   };
 
   return (
     <div className="min-h-screen bg-[#1a1525] text-white flex flex-col custom-cursor-active">
 
-      {/* HEADER — Estilo menú pausa RPG */}
+      {/* HEADER */}
       <header className="border-b-4 border-white bg-[#1a1525]/90 backdrop-blur-sm z-40 sticky top-0">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col items-center gap-3">
+        <div className="max-w-5xl mx-auto px-3 py-2 flex flex-col items-center gap-2">
 
-          <div className="w-full flex justify-between items-center px-2 gap-3">
-            <span className="font-retro text-[6px] text-slate-500">
+          {/* Top bar: user info + mini player + coins + logout */}
+          <div className="w-full flex justify-between items-center gap-2">
+            <span className="font-retro text-[6px] text-slate-500 hidden xs:block">
               JUGADOR: <span className="text-pastel-pink uppercase">{user?.username}</span>
             </span>
-            <div className="flex items-center gap-2">
+            <span className="font-retro text-[6px] text-slate-500 xs:hidden uppercase text-pastel-pink">
+              {user?.username}
+            </span>
+            <div className="flex items-center gap-1.5">
               <MiniPlayer onOpenMusic={() => handleTab('music')} />
-              <div className="flex items-center gap-1.5 border-2 border-yellow-500/40 bg-yellow-500/10 px-2 py-1">
+              <div className="flex items-center gap-1 border-2 border-yellow-500/40 bg-yellow-500/10 px-1.5 py-1">
                 <Coins className="w-3 h-3 text-yellow-400" />
                 <span className="font-retro text-[7px] text-yellow-300">{points}</span>
                 <span className="font-retro text-[6px] text-pastel-pink">♡</span>
               </div>
+              <MagneticButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playPop();
+                  onLogout();
+                }}
+                className="relative z-50 retro-btn text-[6px] py-1 px-2 border border-red-500 bg-red-950/40 text-red-400 hover:bg-red-900/60 shrink-0"
+              >
+                SALIR
+              </MagneticButton>
             </div>
-            <MagneticButton
-              onClick={(e) => {
-                e.stopPropagation();
-                playPop();
-                onLogout();
-              }}
-              className="relative z-50 retro-btn text-[7px] py-1.5 px-3 border border-red-500 bg-red-950/40 text-red-400 hover:bg-red-900/60 shrink-0"
-            >
-              SALIR
-            </MagneticButton>
           </div>
 
-          <motion.div className="flex items-center gap-3"
+          {/* Title */}
+          <motion.div className="flex items-center gap-2"
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
-            <Heart className="w-5 h-5 text-pastel-pink fill-pastel-pink animate-pulse" />
-            <h1 className="font-retro text-[10px] sm:text-xs text-white tracking-wide">
+            <Heart className="w-4 h-4 text-pastel-pink fill-pastel-pink animate-pulse" />
+            <h1 className="font-retro text-[9px] sm:text-[10px] text-white tracking-wide">
               PARA CHOE ♡ SAVE FILE 01
             </h1>
-            <Heart className="w-5 h-5 text-pastel-pink fill-pastel-pink animate-pulse" />
+            <Heart className="w-4 h-4 text-pastel-pink fill-pastel-pink animate-pulse" />
           </motion.div>
 
-          <nav className="flex flex-wrap gap-2 justify-center">
+          {/* Navigation tabs — scrollable on mobile */}
+          <nav className="flex gap-1.5 justify-start w-full overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
             {tabs.map(({ id, name, icon: Icon }) => {
               const active = activeTab === id;
               return (
                 <MagneticButton key={id}
                   onClick={() => handleTab(id)}
                   onMouseEnter={playTick}
-                  className={`font-retro text-[8px] px-3 py-2 border-2 flex items-center gap-1.5 transition-colors duration-100
+                  className={`snap-start shrink-0 font-retro text-[7px] px-2.5 py-1.5 border-2 flex items-center gap-1 transition-colors duration-100
                     ${active
-                      ? 'bg-white text-black border-black shadow-[3px_3px_0_#000]'
+                      ? 'bg-white text-black border-black shadow-[2px_2px_0_#000]'
                       : 'bg-transparent text-slate-300 border-slate-600 hover:border-white hover:text-white'}`}>
-                  <Icon className="w-3 h-3" />{name}
+                  <Icon className="w-3 h-3" />
+                  <span className="hidden sm:inline">{name}</span>
+                  <span className="sm:hidden">{name.charAt(0)}{name.includes('ú') || name.includes('é') || name.includes('á') ? name.slice(1,3) : name.slice(1,2)}</span>
                 </MagneticButton>
               );
             })}
@@ -114,7 +125,7 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
       </header>
 
       {/* CONTENIDO */}
-      <main className="flex-grow py-6 px-2 overflow-x-hidden">
+      <main className="flex-grow py-4 sm:py-6 px-2 overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div key={activeTab}
             variants={pageVariants} initial="initial" animate="animate" exit="exit"
@@ -131,10 +142,24 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
         </AnimatePresence>
       </main>
 
-      <footer className="border-t-4 border-white/20 py-4 text-center font-retro text-[6px] text-slate-500">
+      <footer className="border-t-4 border-white/20 py-3 text-center font-retro text-[5px] sm:text-[6px] text-slate-500 px-4">
         HECHO CON ♡ PARA CHOE • {new Date().getFullYear()} •{' '}
-        ESCRIBE <span className="text-pastel-pink">SIGMA</span> O{' '}
-        <span className="text-pastel-blue">TRETIS</span> PARA SORPRESAS 👀
+        <span className="hidden sm:inline">ESCRIBE </span>
+        <span className="sm:hidden">TOCA </span>
+        <button
+          onClick={onSigma}
+          className="text-pastel-pink hover:text-white active:scale-95 transition-transform cursor-none underline underline-offset-2 decoration-dotted"
+        >
+          SIGMA
+        </button>
+        {' '}O{' '}
+        <button
+          onClick={onTretis}
+          className="text-pastel-blue hover:text-white active:scale-95 transition-transform cursor-none underline underline-offset-2 decoration-dotted"
+        >
+          TRETIS
+        </button>
+        {' '}👀
       </footer>
     </div>
   );
@@ -151,12 +176,14 @@ export default function App() {
   const user = useStore((state) => state.user);
   const logout = useStore((state) => state.logout);
   const refreshUserData = useStore((state) => state.refreshUserData);
+  const fetchLikes = useStore((state) => state.fetchLikes);
 
   const [isGlitching,     setIsGlitching]     = useState(false);
   const [glitchText,      setGlitchText]       = useState('');
   const [anniversaryDate, setAnniversaryDate]  = useState('2023-09-15');
   const [publicSettings,  setPublicSettings]   = useState({});
   const setMusicSettings = useStore((s) => s.setMusicSettings);
+  const [showAnnivCard,   setShowAnnivCard]   = useState(false);
 
   const loadDynamicData = useCallback(async () => {
     try {
@@ -179,10 +206,59 @@ export default function App() {
     if (user) {
       loadDynamicData();
       refreshUserData();
+      fetchLikes();
     }
-  }, [user, loadDynamicData, refreshUserData]);
+  }, [user, loadDynamicData, refreshUserData, fetchLikes]);
 
+  // Verificar fecha de aniversario en primer inicio de sesión de choe
+  useEffect(() => {
+    if (user && user.username.toLowerCase() === 'choe' && anniversaryDate) {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-indexed
+      const currentDay = now.getDate();
 
+      const parts = anniversaryDate.split('-');
+      if (parts.length === 3) {
+        const annivMonth = parseInt(parts[1], 10);
+        const annivDay = parseInt(parts[2], 10);
+
+        if (currentMonth === annivMonth && currentDay === annivDay) {
+          const todayStr = `${now.getFullYear()}-${currentMonth}-${currentDay}`;
+          const hasSeen = localStorage.getItem(`hasSeenAnniversaryCard_${todayStr}`);
+          if (!hasSeen) {
+            setShowAnnivCard(true);
+          }
+        }
+      }
+    }
+  }, [user, anniversaryDate]);
+
+  // Disparar confeti cuando se abre la tarjeta de aniversario
+  useEffect(() => {
+    if (showAnnivCard) {
+      const duration = 5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100000 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+
+      return () => clearInterval(interval);
+    }
+  }, [showAnnivCard]);
 
   const handleLoginSuccess = () => {
     // Al iniciar sesión, el hook user en Zustand se actualiza reactivamente
@@ -259,11 +335,63 @@ export default function App() {
               anniversaryDate={anniversaryDate}
               onUpdateData={loadDynamicData}
               publicSettings={publicSettings}
+              onSigma={handleSigma}
+              onTretis={handleTretis}
             />
           )} />
           <Route path="/secret-game" element={wrap(<SecretGame />)} />
           <Route path="/tetris"      element={wrap(<TetrisGame />)} />
         </Routes>
+      </AnimatePresence>
+
+      {/* Tarjeta de Aniversario Modal */}
+      <AnimatePresence>
+        {showAnnivCard && (
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#0f0a1c]/85 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="retro-container p-8 max-w-md w-full text-center space-y-6 bg-[#1a1525] relative border-4 border-white shadow-[0_12px_0_rgba(0,0,0,0.6)]"
+            >
+              {/* Hearts flotando */}
+              <div className="flex justify-center gap-2">
+                <Heart className="w-8 h-8 text-pastel-pink fill-pastel-pink animate-bounce" />
+                <Heart className="w-8 h-8 text-pastel-pink fill-pastel-pink animate-pulse" />
+                <Heart className="w-8 h-8 text-pastel-pink fill-pastel-pink animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </div>
+
+              <h2 className="font-retro text-sm sm:text-base text-yellow-400 tracking-wider">
+                🌟 DÍA ESPECIAL DETECTADO 🌟
+              </h2>
+
+              <p className="font-sans text-[14px] text-slate-100 leading-relaxed whitespace-pre-line py-2">
+                {publicSettings?.anniversary_message || '¡Feliz Aniversario mi amor!'}
+              </p>
+
+              <p className="font-sans italic text-[11px] text-slate-400">
+                "El tiempo es relativo, pero cada segundo contigo vale una eternidad." 💕
+              </p>
+
+              <div>
+                <MagneticButton
+                  onClick={() => {
+                    const now = new Date();
+                    const currentMonth = now.getMonth() + 1;
+                    const currentDay = now.getDate();
+                    const todayStr = `${now.getFullYear()}-${currentMonth}-${currentDay}`;
+                    localStorage.setItem(`hasSeenAnniversaryCard_${todayStr}`, 'true');
+                    setShowAnnivCard(false);
+                    playPop();
+                  }}
+                  className="retro-btn w-full text-[8px] py-3 bg-[#ffd1dc] hover:bg-white text-black border-black font-retro"
+                >
+                  ¡GRACIAS! CERRAR ♡
+                </MagneticButton>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </>
   );

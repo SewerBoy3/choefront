@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image, Heart, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { playPop, playTick } from '../utils/sounds';
+import useStore from '../store/useStore';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -10,6 +11,9 @@ export default function MemoryGallery() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
+
+  const likedPhotos = useStore((state) => state.likes.foto || []);
+  const toggleLikeApi = useStore((state) => state.toggleLikeApi);
 
   useEffect(() => {
     fetchPhotos();
@@ -135,7 +139,11 @@ export default function MemoryGallery() {
 
             {/* Overlay hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-              <Heart className="w-4 h-4 text-pastel-pink fill-pastel-pink mb-1 animate-pulse" />
+              <Heart 
+                className={`w-4 h-4 mb-1 transition-colors duration-200 ${
+                  likedPhotos.includes(photo.id) ? 'text-pastel-pink fill-pastel-pink animate-bounce' : 'text-slate-400'
+                }`} 
+              />
               {photo.caption && (
                 <p className="font-retro text-[6px] text-white leading-relaxed line-clamp-2">
                   {photo.caption}
@@ -205,15 +213,25 @@ export default function MemoryGallery() {
                 />
               </div>
 
-              {/* Caption */}
-              {selected.caption && (
-                <div className="mt-4 retro-container px-6 py-3 max-w-lg text-center">
-                  <Heart className="w-3 h-3 text-pastel-pink fill-pastel-pink inline mr-2" />
-                  <span className="font-retro text-[7px] text-white leading-relaxed">
-                    {selected.caption}
-                  </span>
-                </div>
-              )}
+              {/* Caption & Like button */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 w-full max-w-lg justify-center">
+                {selected.caption && (
+                  <div className="retro-container px-6 py-3 text-center flex-grow">
+                    <span className="font-retro text-[7px] text-white leading-relaxed">
+                      {selected.caption}
+                    </span>
+                  </div>
+                )}
+                
+                <button
+                  onClick={(e) => { e.stopPropagation(); playPop(); toggleLikeApi(selected.id, 'foto'); }}
+                  className="retro-btn !p-2 !min-w-0 bg-white/95 border-2 border-black active:scale-95 shadow-[3px_3px_0_#000] hover:!bg-pink-100 flex items-center gap-1.5 shrink-0"
+                  title={likedPhotos.includes(selected.id) ? 'Quitar me gusta' : 'Me gusta'}
+                >
+                  <Heart className={`w-4 h-4 transition-colors duration-200 ${likedPhotos.includes(selected.id) ? 'text-pastel-pink fill-pastel-pink animate-bounce' : 'text-slate-400'}`} />
+                  <span className="font-retro text-[6px] text-black">{likedPhotos.includes(selected.id) ? 'ME ENCANTA' : 'DAR LIKE'}</span>
+                </button>
+              </div>
 
               {/* Counter */}
               <div className="mt-3 font-retro text-[6px] text-slate-500">

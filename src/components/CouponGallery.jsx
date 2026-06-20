@@ -201,7 +201,7 @@ export default function CouponGallery() {
           </div>
           <p className="font-retro text-[6px] text-slate-500 max-w-md leading-relaxed">
             Gana monedas en Sigma Runner y Tetris (escribe SIGMA o TRETIS en el menú).
-            Cada partida da monedas por participación y rendimiento, más bonus por récord y primera partida del día.
+            Cada partida da monedas por participación y rendimiento, más bonus por récord y primera partida del día (máximo 300 monedas semanales de juegos).
           </p>
           {economyInfo && (
             <div className="mt-2 flex flex-wrap gap-1.5">

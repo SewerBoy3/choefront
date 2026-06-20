@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Heart, X, ChevronLeft, ChevronRight, Feather, Loader2 } from 'lucide-react';
 import { playPop, playTick } from '../utils/sounds';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
+import useStore from '../store/useStore';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -68,7 +69,7 @@ function LetterCard({ carta, index, onClick }) {
   );
 }
 
-function LetterReader({ carta, onClose, onNext, onPrev, hasNext, hasPrev }) {
+function LetterReader({ carta, onClose, onNext, onPrev, hasNext, hasPrev, isLiked, onLikeToggle }) {
   const safeContent = useMemo(() => sanitizeHtml(carta.content), [carta.content]);
 
   useEffect(() => {
@@ -157,9 +158,16 @@ function LetterReader({ carta, onClose, onNext, onPrev, hasNext, hasPrev }) {
             dangerouslySetInnerHTML={{ __html: safeContent }}
           />
 
-          <div className="px-6 pb-6 flex items-center justify-center gap-2">
+          <div className="px-6 pb-6 flex items-center justify-center gap-4">
             <div className="h-[2px] flex-1 bg-white/10" />
-            <Heart className="w-3 h-3 text-pastel-pink fill-pastel-pink animate-pulse" />
+            <button
+              onClick={(e) => { e.stopPropagation(); playPop(); onLikeToggle(carta.id); }}
+              className="retro-btn !p-2 !min-w-0 bg-white/95 border-2 border-black active:scale-95 shadow-[3px_3px_0_#000] hover:!bg-pink-100 flex items-center gap-1.5"
+              title={isLiked ? 'Quitar me gusta' : 'Me gusta'}
+            >
+              <Heart className={`w-4 h-4 transition-colors duration-200 ${isLiked ? 'text-pastel-pink fill-pastel-pink animate-bounce' : 'text-slate-400'}`} />
+              <span className="font-retro text-[6px] text-black">{isLiked ? 'ME ENCANTA' : 'DAR LIKE'}</span>
+            </button>
             <div className="h-[2px] flex-1 bg-white/10" />
           </div>
         </div>
@@ -172,6 +180,9 @@ export default function Poemario() {
   const [cartas, setCartas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(null);
+
+  const likedLetters = useStore((state) => state.likes.carta || []);
+  const toggleLikeApi = useStore((state) => state.toggleLikeApi);
 
   useEffect(() => {
     fetchCartas();
@@ -251,6 +262,8 @@ export default function Poemario() {
             onPrev={() => setSelectedIndex((prev) => Math.max(prev - 1, 0))}
             hasNext={selectedIndex < cartas.length - 1}
             hasPrev={selectedIndex > 0}
+            isLiked={likedLetters.includes(cartas[selectedIndex].id)}
+            onLikeToggle={(id) => toggleLikeApi(id, 'carta')}
           />
         )}
       </AnimatePresence>

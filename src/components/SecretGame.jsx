@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { ArrowLeft, Gamepad2 } from 'lucide-react';
-import { playPop, playSuccess, playError } from '../utils/sounds';
+import { playPop, playSuccess, playError, startDinoBGM, stopDinoBGM, playDinoJump, playDinoCoin, playDinoHit } from '../utils/sounds';
 import useStore from '../store/useStore';
 
 // ─────────────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ export default function SecretGame() {
       g.hero.vy = g.hero.onGround ? -14.5 : -11.5;
       g.hero.onGround = false;
       g.jumpCount++;
-      playPop();
+      playDinoJump();
     }
   }, []);
 
@@ -200,6 +200,7 @@ export default function SecretGame() {
     setCombo(0);
     setEarnedPoints(0);
     playPop();
+    startDinoBGM();
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
   }, []);
@@ -210,7 +211,8 @@ export default function SecretGame() {
     g.shakeFrames = 12;
     setGameState('GAMEOVER');
     cancelAnimationFrame(rafRef.current);
-    playError();
+    stopDinoBGM();
+    playDinoHit();
     
     if (g.score > g.bestScore) {
       g.bestScore = g.score;
@@ -384,7 +386,7 @@ export default function SecretGame() {
         g.score += 25;
         g.invincible = 60; // 1s de invencibilidad al recoger moneda
         setCombo(prev => prev + 1);
-        playPop();
+        playDinoCoin();
       }
 
       if (c.x + 20 < 0) g.coins.splice(i, 1);
@@ -476,34 +478,38 @@ export default function SecretGame() {
       if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
     };
     window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('keydown', onKey); cancelAnimationFrame(rafRef.current); };
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      cancelAnimationFrame(rafRef.current);
+      stopDinoBGM();
+    };
   }, [jump]);
 
   return (
-    <div className="min-h-screen bg-[#1a1525] flex flex-col items-center justify-center py-8 px-4 select-none custom-cursor-active">
-      <div className="w-full max-w-2xl mb-4 flex items-center justify-between">
-        <a href="/" onClick={playPop} className="retro-btn inline-flex items-center gap-2 text-[9px]">
-          <ArrowLeft className="w-3.5 h-3.5" /> MENÚ
+    <div className="min-h-screen bg-[#1a1525] flex flex-col items-center justify-start sm:justify-center py-4 sm:py-8 px-2 sm:px-4 select-none custom-cursor-active">
+      <div className="w-full max-w-2xl mb-3 flex items-center justify-between gap-2">
+        <a href="/" onClick={playPop} className="retro-btn inline-flex items-center gap-1.5 text-[7px] sm:text-[9px]">
+          <ArrowLeft className="w-3 h-3" /> MENÚ
         </a>
-        <div className="font-retro text-[7px] text-slate-400 text-right leading-relaxed">
+        <div className="font-retro text-[5px] sm:text-[7px] text-slate-400 text-right leading-relaxed">
           <p>ESPACIO / ↑ = SALTAR (DOBLE SALTO)</p>
           <p className="text-pastel-pink">MONEDA ★ = INVENCIBILIDAD</p>
         </div>
       </div>
 
-      <div className="retro-container p-4 w-full max-w-2xl">
-        <div className="flex justify-between font-retro text-[9px] text-white mb-3 px-1">
+      <div className="retro-container p-2 sm:p-4 w-full max-w-2xl">
+        <div className="flex justify-between font-retro text-[7px] sm:text-[9px] text-white mb-2 sm:mb-3 px-1">
           <span className="flex items-center gap-1.5">
-            <Gamepad2 className="w-3.5 h-3.5 text-pastel-pink animate-pulse" /> SIGMA RUNNER
+            <Gamepad2 className="w-3 h-3 text-pastel-pink animate-pulse" /> SIGMA RUNNER
           </span>
-          <div className="flex gap-4">
-            <span>SCORE <span className="text-pastel-pink">{displayScore}</span></span>
-            <span>BEST <span className="text-pastel-blue">{displayBest}</span></span>
-            {combo > 0 && <span>COMBO <span className="text-yellow-300 animate-pulse">×{combo}</span></span>}
+          <div className="flex gap-2 sm:gap-4">
+            <span>SC <span className="text-pastel-pink">{displayScore}</span></span>
+            <span>HI <span className="text-pastel-blue">{displayBest}</span></span>
+            {combo > 0 && <span>X<span className="text-yellow-300 animate-pulse">{combo}</span></span>}
           </div>
         </div>
 
-        <div className="border-4 border-white overflow-hidden" style={{ imageRendering: 'pixelated' }}>
+        <div className="game-canvas-wrap border-4 border-white overflow-hidden">
           <canvas ref={canvasRef} width={600} height={200} className="w-full block"
             style={{ imageRendering: 'pixelated', touchAction: 'none' }}
             onClick={jump}
@@ -511,8 +517,8 @@ export default function SecretGame() {
           />
         </div>
 
-        <p className="text-center mt-3 font-retro text-[6px] text-slate-500">
-          RECOGE MONEDAS PARA 1 SEG DE INVENCIBILIDAD  ·  ESQUIVA PAJAROS Y CACTUS  ·  DOBLE SALTO DISPONIBLE
+        <p className="text-center mt-2 font-retro text-[5px] sm:text-[6px] text-slate-500 leading-relaxed">
+          RECOGE MONEDAS PARA INVENCIBILIDAD · ESQUIVA PAJAROS Y CACTUS · DOBLE SALTO
         </p>
       </div>
     </div>

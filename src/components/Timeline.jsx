@@ -95,33 +95,33 @@ export default function Timeline({ anniversaryDate }) {
       </motion.div>
 
       {/* Contadores grandes */}
-      <motion.div variants={itemVars} className="grid grid-cols-3 gap-4 mb-8">
+      <motion.div variants={itemVars} className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
         {counters.map(({ label, value, color }) => (
-          <div key={label} className="retro-container p-5 flex flex-col items-center gap-2">
-            <span className="font-retro text-4xl md:text-5xl" style={{ color, textShadow: `3px 3px 0 #000` }}>
+          <div key={label} className="retro-container p-2 sm:p-5 flex flex-col items-center gap-1 sm:gap-2">
+            <span className="font-retro text-2xl sm:text-4xl md:text-5xl" style={{ color, textShadow: `2px 2px 0 #000` }}>
               {value}
             </span>
-            <span className="font-retro text-[8px] text-slate-400 tracking-widest">{label}</span>
+            <span className="font-retro text-[6px] sm:text-[8px] text-slate-400 tracking-widest">{label}</span>
           </div>
         ))}
       </motion.div>
 
       {/* Reloj en tiempo real */}
       <motion.div variants={itemVars}
-        className="retro-container p-4 flex flex-wrap justify-around items-center gap-4 max-w-md mx-auto">
-        <div className="flex items-center gap-2 font-retro text-[9px] text-slate-400">
-          <Clock className="w-4 h-4 animate-spin text-pastel-blue" style={{ animationDuration: '6s' }} />
+        className="retro-container p-3 sm:p-4 flex flex-wrap justify-around items-center gap-3 max-w-md mx-auto">
+        <div className="flex items-center gap-2 font-retro text-[8px] sm:text-[9px] text-slate-400">
+          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-pastel-blue" style={{ animationDuration: '6s' }} />
           TIEMPO REAL
         </div>
-        <div className="flex gap-3 font-mono text-lg text-white">
+        <div className="flex gap-2 sm:gap-3 font-mono text-base sm:text-lg text-white">
           {[t.hours, t.minutes, t.seconds].map((val, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span className="text-pastel-pink animate-pulse">:</span>}
               <div className="flex flex-col items-center">
-                <span className="font-retro text-xs" style={{ color: i === 2 ? '#ff99aa' : '#fff' }}>
+                <span className="font-retro text-[10px] sm:text-xs" style={{ color: i === 2 ? '#ff99aa' : '#fff' }}>
                   {String(val).padStart(2, '0')}
                 </span>
-                <span className="font-retro text-[7px] text-slate-500">{['HS','MIN','SEG'][i]}</span>
+                <span className="font-retro text-[5px] sm:text-[7px] text-slate-500">{['HS','MIN','SEG'][i]}</span>
               </div>
             </React.Fragment>
           ))}
@@ -130,9 +130,6 @@ export default function Timeline({ anniversaryDate }) {
 
       {/* Mensaje de aniversario dinámico y pie */}
       <motion.div variants={itemVars} className="text-center mt-10 space-y-4">
-        <p className="font-retro text-[9px] text-pastel-pink animate-pulse tracking-wide">
-          ✨ {annivMsg} ✨
-        </p>
         <p className="font-sans italic text-xs text-slate-500">
           "El tiempo es relativo, pero cada segundo contigo vale una eternidad." 💕
         </p>

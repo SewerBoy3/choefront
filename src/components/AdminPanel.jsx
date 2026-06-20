@@ -234,6 +234,29 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
     }
   };
 
+  const handleNotifyCredentials = async () => {
+    playPop();
+    setTestResult('Enviando credenciales a Zoe...');
+    try {
+      const response = await fetch(`${API_ADMIN_URL}/notify-credentials`, {
+        method: 'POST',
+        headers: adminHeaders()
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        playSuccess();
+        setTestResult('¡ÉXITO! Credenciales enviadas a Zoe.');
+      } else {
+        playError();
+        setTestResult(`FALLÓ: ${data.error || 'Error desconocido'}`);
+      }
+    } catch (err) {
+      playError();
+      setTestResult('FALLÓ: Error de conexión.');
+    }
+  };
+
+
   // Crear nuevo cupón
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
@@ -536,12 +559,20 @@ export default function AdminPanel({ onUpdateData, adminUser }) {
               >
                 PROBAR MENSAJES PRIVADOS
               </button>
+              <button
+                type="button"
+                onClick={handleNotifyCredentials}
+                className="retro-btn text-[8px] py-1.5 px-3 bg-pastel-pink text-black"
+              >
+                NOTIFICAR CREDENCIALES A ZOE
+              </button>
               {testResult && (
                 <span className="font-retro text-[7px] text-yellow-300 animate-pulse">
                   {testResult}
                 </span>
               )}
             </div>
+
           </div>
 
           <button

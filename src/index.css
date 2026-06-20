@@ -203,3 +203,47 @@
   border-top: 2px dashed rgba(255,255,255,0.15);
   margin: 1.5em 0;
 }
+
+/* ── Scrollbar hidden utility ── */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Mobile: prevent horizontal overflow ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ── Mobile safe area insets (notch/home bar) ── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Retro btn mobile: smaller tap target that still looks good ── */
+@media (max-width: 480px) {
+  .retro-btn {
+    padding: 8px 12px;
+    font-size: 0.55rem;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .retro-container {
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ── Canvas game container: fit width on mobile ── */
+.game-canvas-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+.game-canvas-wrap canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { ArrowLeft, Gamepad2 } from 'lucide-react';
-import { playPop, playSuccess, playError, playSwoosh } from '../utils/sounds';
+import { playPop, playSuccess, playError, playSwoosh, startTetrisBGM, stopTetrisBGM, playTetrisMove, playTetrisRotate, playTetrisLineClear, playGameOver } from '../utils/sounds';
 import useStore from '../store/useStore';
 
 // ── Piezas del Tetris ────────────────────────────────────────────
@@ -119,6 +119,50 @@ function drawBlock(ctx, x, y, color, size = BLOCK) {
 
 const SCORES_PER_LINE = [0, 100, 300, 500, 800];
 
+// Spawn particles on block lock/landing
+function spawnLandingParticles(S, piece) {
+  for (let r = 0; r < piece.matrix.length; r++) {
+    for (let c = 0; c < piece.matrix[r].length; c++) {
+      if (!piece.matrix[r][c]) continue;
+      const px = (piece.x + c) * BLOCK + BLOCK / 2;
+      const py = (piece.y + r + 1) * BLOCK;
+      for (let k = 0; k < 2; k++) {
+        S.particles.push({
+          x: px + (Math.random() - 0.5) * BLOCK,
+          y: py - 2,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: -Math.random() * 1.8 - 0.8,
+          color: piece.color,
+          alpha: 1,
+          size: Math.random() * 3 + 2,
+          life: 0,
+          maxLife: 20
+        });
+      }
+    }
+  }
+}
+
+// Spawn sparkles on line clear
+function spawnLineClearParticles(S, row) {
+  const W = COLS * BLOCK;
+  for (let i = 0; i < 30; i++) {
+    const px = Math.random() * W;
+    const py = row * BLOCK + BLOCK / 2;
+    S.particles.push({
+      x: px,
+      y: py,
+      vx: (Math.random() - 0.5) * 4.5,
+      vy: (Math.random() - 0.5) * 4.5 - 1.5,
+      color: ['#fff', '#fde047', '#ff99aa', '#d8b4fe'][Math.floor(Math.random() * 4)],
+      alpha: 1,
+      size: Math.random() * 4 + 3.2,
+      life: 0,
+      maxLife: 35
+    });
+  }
+}
+
 export default function TetrisGame() {
   const canvasRef     = useRef(null);
   const previewRef    = useRef(null);
@@ -140,6 +184,10 @@ export default function TetrisGame() {
     lastDrop: 0,
     state: 'START',
     bestScore: Number(localStorage.getItem('tetris_best') || 0),
+    particles: [],
+    flashingRows: [],
+    animationTimer: 0,
+    gridAfterClear: null
   });
 
   const [uiScore,  setUiScore]  = useState(0);
@@ -216,6 +264,37 @@ export default function TetrisGame() {
       }
     }
 
+    // Dibujar destello de líneas completadas
+    if (S.state === 'LINE_CLEAR_ANIMATING' && S.flashingRows && S.flashingRows.length > 0) {
+      if (Math.floor(S.animationTimer / 2) % 2 === 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        S.flashingRows.forEach(r => {
+          ctx.fillRect(0, r * BLOCK, W, BLOCK);
+        });
+      }
+    }
+
+    // Dibujar y actualizar partículas
+    if (S.particles && S.particles.length > 0) {
+      for (let i = S.particles.length - 1; i >= 0; i--) {
+        const p = S.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.16; // gravedad
+        p.alpha = Math.max(0, 1 - (p.life / p.maxLife));
+        p.life++;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+
+        if (p.life >= p.maxLife) {
+          S.particles.splice(i, 1);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // Preview pieza siguiente
     const preview = previewRef.current;
     if (preview && S.next) {
@@ -237,30 +316,16 @@ export default function TetrisGame() {
   // Loop principal
   const loop = useCallback((timestamp) => {
     const S = stateRef.current;
-    if (S.state !== 'PLAYING') return;
+    if (S.state !== 'PLAYING' && S.state !== 'LINE_CLEAR_ANIMATING') return;
 
-    if (timestamp - S.lastDrop > S.dropInterval) {
-      S.lastDrop = timestamp;
-      if (fits(S.grid, S.current, 0, 1)) {
-        S.current.y++;
-      } else {
-        // Bloquear pieza
-        S.grid = merge(S.grid, S.current);
-        const { grid: newGrid, lines } = clearLines(S.grid);
-        S.grid = newGrid;
-        if (lines > 0) {
-          const pts = SCORES_PER_LINE[lines] * S.level;
-          S.score += pts;
-          S.lines += lines;
-          S.level = 1 + Math.floor(S.lines / 10);
-          S.dropInterval = Math.max(80, 600 - (S.level - 1) * 55);
-          setUiScore(S.score); setUiLines(S.lines); setUiLevel(S.level);
-          playPop();
-          if (lines >= 4) playSuccess();
-        }
+    // Actualizar partículas durante la animación
+    if (S.state === 'LINE_CLEAR_ANIMATING') {
+      S.animationTimer--;
+      if (S.animationTimer <= 0) {
+        S.grid = S.gridAfterClear;
         S.current = S.next;
-        S.next    = getNextPieceFromBag(S);
-        // Game over
+        S.next = getNextPieceFromBag(S);
+        
         if (!fits(S.grid, S.current, 0, 0)) {
           S.state = 'GAMEOVER';
           if (S.score > S.bestScore) {
@@ -269,10 +334,10 @@ export default function TetrisGame() {
             setUiBest(S.score);
           }
           setGameState('GAMEOVER');
-          playError();
+          stopTetrisBGM();
+          playGameOver();
           render();
 
-          // Reportar puntuación del Tetris al servidor
           if (token && S.score > 0) {
             fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/games/score`, {
               method: 'POST',
@@ -293,6 +358,83 @@ export default function TetrisGame() {
           }
           return;
         }
+        S.state = 'PLAYING';
+        S.lastDrop = timestamp;
+      }
+      render();
+      rafRef.current = requestAnimationFrame(loop);
+      return;
+    }
+
+    if (timestamp - S.lastDrop > S.dropInterval) {
+      S.lastDrop = timestamp;
+      if (fits(S.grid, S.current, 0, 1)) {
+        S.current.y++;
+      } else {
+        S.grid = merge(S.grid, S.current);
+        
+        // Detectar líneas a limpiar
+        const clearingLines = [];
+        for (let r = 0; r < ROWS; r++) {
+          if (S.grid[r].every(cell => cell !== null)) {
+            clearingLines.push(r);
+          }
+        }
+
+        if (clearingLines.length > 0) {
+          playTetrisLineClear();
+          clearingLines.forEach(r => spawnLineClearParticles(S, r));
+          
+          const { grid: newGrid } = clearLines(S.grid);
+          S.gridAfterClear = newGrid;
+          S.flashingRows = clearingLines;
+          S.state = 'LINE_CLEAR_ANIMATING';
+          S.animationTimer = 15; // 15 frames de destello
+
+          const pts = SCORES_PER_LINE[clearingLines.length] * S.level;
+          S.score += pts;
+          S.lines += clearingLines.length;
+          S.level = 1 + Math.floor(S.lines / 10);
+          S.dropInterval = Math.max(80, 600 - (S.level - 1) * 55);
+          setUiScore(S.score); setUiLines(S.lines); setUiLevel(S.level);
+        } else {
+          spawnLandingParticles(S, S.current);
+          S.current = S.next;
+          S.next = getNextPieceFromBag(S);
+          
+          if (!fits(S.grid, S.current, 0, 0)) {
+            S.state = 'GAMEOVER';
+            if (S.score > S.bestScore) {
+              S.bestScore = S.score;
+              localStorage.setItem('tetris_best', String(S.score));
+              setUiBest(S.score);
+            }
+            setGameState('GAMEOVER');
+            stopTetrisBGM();
+            playGameOver();
+            render();
+
+            if (token && S.score > 0) {
+              fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/games/score`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ game_name: 'tetris', score: S.score })
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  setPoints(data.totalPoints);
+                  setEarnedPoints(data.pointsAwarded);
+                }
+              })
+              .catch(err => console.error('Error al guardar score:', err));
+            }
+            return;
+          }
+        }
       }
     }
 
@@ -303,7 +445,8 @@ export default function TetrisGame() {
   const startGame = useCallback(() => {
     const S = stateRef.current;
     S.grid = emptyGrid();
-    S.bag = []; // Reiniciar bolsa
+    S.bag = [];
+    S.particles = [];
     S.current = getNextPieceFromBag(S);
     S.next = getNextPieceFromBag(S);
     S.score = 0; S.lines = 0; S.level = S.startLevel;
@@ -312,6 +455,7 @@ export default function TetrisGame() {
     setEarnedPoints(0);
     setGameState('PLAYING');
     playPop();
+    startTetrisBGM();
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
   }, [loop]);
@@ -358,23 +502,53 @@ export default function TetrisGame() {
         return;
       }
       switch (e.code) {
-        case 'ArrowLeft':  if (fits(S.grid, S.current, -1, 0)) S.current.x--; break;
-        case 'ArrowRight': if (fits(S.grid, S.current,  1, 0)) S.current.x++; break;
+        case 'ArrowLeft':
+          if (fits(S.grid, S.current, -1, 0)) {
+            S.current.x--;
+            playTetrisMove();
+          }
+          break;
+        case 'ArrowRight':
+          if (fits(S.grid, S.current,  1, 0)) {
+            S.current.x++;
+            playTetrisMove();
+          }
+          break;
         case 'ArrowDown':
-          if (fits(S.grid, S.current, 0, 1)) S.current.y++;
-          else S.lastDrop = 0;
+          if (fits(S.grid, S.current, 0, 1)) {
+            S.current.y++;
+            playTetrisMove();
+          } else {
+            S.lastDrop = 0;
+          }
           break;
         case 'ArrowUp': case 'KeyX': {
           const rot = rotateCW(S.current.matrix);
           const tmp = { ...S.current, matrix: rot };
           const kicks = [0, 1, -1, 2, -2];
+          let rotated = false;
           for (const k of kicks) {
-            if (fits(S.grid, tmp, k, 0)) { S.current.matrix = rot; S.current.x += k; break; }
+            if (fits(S.grid, tmp, k, 0)) {
+              S.current.matrix = rot;
+              S.current.x += k;
+              rotated = true;
+              break;
+            }
+          }
+          if (rotated) {
+            playTetrisRotate();
           }
           break;
         }
         case 'Space': {
-          while (fits(S.grid, S.current, 0, 1)) S.current.y++;
+          let dropped = false;
+          while (fits(S.grid, S.current, 0, 1)) {
+            S.current.y++;
+            dropped = true;
+          }
+          if (dropped) {
+            playTetrisMove();
+          }
           S.lastDrop = 0;
           break;
         }
@@ -385,51 +559,61 @@ export default function TetrisGame() {
     return () => window.removeEventListener('keydown', onKey);
   }, [gameState, startGame, render]);
 
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      stopTetrisBGM();
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#1a1525] flex flex-col items-center justify-center py-8 px-4 select-none custom-cursor-active">
-      <div className="w-full max-w-xl mb-4 flex items-center justify-between">
-        <a href="/" onClick={playPop} className="retro-btn inline-flex items-center gap-2 text-[9px]">
-          <ArrowLeft className="w-3.5 h-3.5" /> MENÚ
+    <div className="min-h-screen bg-[#1a1525] flex flex-col items-center justify-start sm:justify-center py-4 sm:py-8 px-2 sm:px-4 select-none custom-cursor-active">
+      <div className="w-full max-w-xl mb-3 flex items-center justify-between gap-2">
+        <a href="/" onClick={playPop} className="retro-btn inline-flex items-center gap-1.5 text-[7px] sm:text-[9px]">
+          <ArrowLeft className="w-3 h-3" /> MENÚ
         </a>
-        <div className="font-retro text-[7px] text-slate-400 text-right leading-relaxed">
-          <p>← → MOVER  ·  ↑ ROTAR  ·  ↓ BAJAR</p>
+        <div className="font-retro text-[5px] sm:text-[7px] text-slate-400 text-right leading-relaxed">
+          <p>← → MOVER · ↑ ROTAR · ↓ BAJAR</p>
           <p className="text-pastel-pink">ESPACIO = CAÍDA INSTANTÁNEA</p>
         </div>
       </div>
 
-      <div className="flex gap-4 items-start">
+      {/* Board + Sidebar: side by side on sm+, stacked below on mobile */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start w-full max-w-xl">
         {/* Tablero */}
-        <div className="retro-container p-2">
+        <div className="retro-container p-1.5 sm:p-2 flex-shrink-0">
           <canvas ref={canvasRef} width={COLS * BLOCK} height={ROWS * BLOCK}
-            className="block" style={{ imageRendering: 'pixelated' }}
+            className="block"
+            style={{ imageRendering: 'pixelated', width: `min(${COLS * BLOCK}px, calc(100vw - 24px))`, height: 'auto' }}
             onClick={() => gameState !== 'PLAYING' && startGame()}
           />
         </div>
 
         {/* Panel lateral */}
-        <div className="flex flex-col gap-4 min-w-[110px]">
-          {/* NEXT */}
-          <div className="retro-container p-3">
-            <p className="font-retro text-[7px] text-slate-400 mb-2">NEXT</p>
-            <canvas ref={previewRef} width={80} height={80} className="block" style={{ imageRendering: 'pixelated' }} />
+        <div className="flex flex-row sm:flex-col gap-2 sm:gap-4 w-full sm:min-w-[110px] sm:w-auto">
+          {/* NEXT + Stats en fila en mobile */}
+          <div className="flex gap-2 sm:flex-col sm:gap-4 flex-1">
+            {/* NEXT */}
+            <div className="retro-container p-2 sm:p-3 flex-shrink-0">
+              <p className="font-retro text-[6px] sm:text-[7px] text-slate-400 mb-1 sm:mb-2">NEXT</p>
+              <canvas ref={previewRef} width={80} height={80} className="block w-14 h-14 sm:w-20 sm:h-20" style={{ imageRendering: 'pixelated' }} />
+            </div>
+            {/* Stats */}
+            <div className="retro-container p-2 sm:p-3 flex flex-wrap sm:block gap-x-4 gap-y-1 sm:space-y-3 flex-1">
+              {[['SC', uiScore], ['HI', uiBest], ['LN', uiLines], ['LV', uiLevel]].map(([label, val]) => (
+                <div key={label}>
+                  <p className="font-retro text-[5px] sm:text-[6px] text-slate-400">{label}</p>
+                  <p className="font-retro text-[9px] sm:text-[11px] text-white">{val}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          {/* Stats */}
-          <div className="retro-container p-3 space-y-3">
-            {[['SCORE', uiScore], ['BEST', uiBest], ['LINES', uiLines], ['LEVEL', uiLevel]].map(([label, val]) => (
-              <div key={label}>
-                <p className="font-retro text-[6px] text-slate-400">{label}</p>
-                <p className="font-retro text-[11px] text-white">{val}</p>
-              </div>
-            ))}
-          </div>
-          {/* Controles rápidos */}
-          <div className="retro-container p-3 space-y-1.5">
+          {/* Controles rápidos — hidden on very small, shown on sm */}
+          <div className="retro-container p-2 sm:p-3 space-y-1 sm:space-y-1.5 hidden xs:block">
             {[['↑','ROTAR'],['← →','MOVER'],['↓','BAJAR'],['SPC','DROP']].map(([k, v]) => (
-              <div key={k} className="flex justify-between items-center">
-                <span className="font-retro text-[6px] text-pastel-pink">{k}</span>
-                <span className="font-retro text-[6px] text-slate-400">{v}</span>
+              <div key={k} className="flex justify-between items-center gap-2">
+                <span className="font-retro text-[5px] sm:text-[6px] text-pastel-pink">{k}</span>
+                <span className="font-retro text-[5px] sm:text-[6px] text-slate-400">{v}</span>
               </div>
             ))}
           </div>

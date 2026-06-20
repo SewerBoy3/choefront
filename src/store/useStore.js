@@ -11,6 +11,7 @@ const useStore = create((set, get) => ({
   // --- APP STATE ---
   points: parseInt(localStorage.getItem('regalo_points')) || 0,
   coupons: [],
+  likes: { cancion: [], foto: [], carta: [] },
 
   // --- AUDIO STATE ---
   currentSong: null,
@@ -28,6 +29,7 @@ const useStore = create((set, get) => ({
     localStorage.setItem('regalo_token', token);
     localStorage.setItem('regalo_points', String(userData.points || 0));
     set({ user: userData, token, points: userData.points || 0 });
+    get().fetchLikes();
   },
 
   logout: () => {
@@ -96,6 +98,53 @@ const useStore = create((set, get) => ({
       }
     } catch (err) {
       console.error('Error al refrescar datos del usuario:', err);
+    }
+  },
+
+  // --- LIKES ACTIONS ---
+  fetchLikes: async () => {
+    const token = get().token;
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/likes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ likes: data });
+      }
+    } catch (err) {
+      console.error('Error al obtener likes:', err);
+    }
+  },
+
+  toggleLikeApi: async (targetId, targetType) => {
+    const token = get().token;
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/likes/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ target_id: targetId, target_type: targetType })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const currentLikes = { ...get().likes };
+        if (data.liked) {
+          if (!currentLikes[targetType].includes(targetId)) {
+            currentLikes[targetType] = [...currentLikes[targetType], targetId];
+          }
+        } else {
+          currentLikes[targetType] = currentLikes[targetType].filter(id => id !== targetId);
+        }
+        set({ likes: currentLikes });
+        return data; // { liked, totalLikes }
+      }
+    } catch (err) {
+      console.error('Error al hacer toggle de like:', err);
     }
   },
 

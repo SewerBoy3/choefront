@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, ExternalLink, Heart, Disc3 } from 'lucide-react';
 import { playPop, playTick } from '../utils/sounds';
+import useStore from '../store/useStore';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -45,27 +46,14 @@ export default function MusicRoom() {
     return () => { cancelled = true; };
   }, []);
 
-  const [likedSongs, setLikedSongs] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('regalo_liked_songs') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const likedSongs = useStore((state) => state.likes.cancion || []);
+  const toggleLikeApi = useStore((state) => state.toggleLikeApi);
 
-  const toggleLike = (songId, e) => {
+  const toggleLike = async (songId, e) => {
     e.stopPropagation();
     e.preventDefault();
     playPop();
-    const isLiked = likedSongs.includes(songId);
-    let nextLikes;
-    if (isLiked) {
-      nextLikes = likedSongs.filter(id => id !== songId);
-    } else {
-      nextLikes = [...likedSongs, songId];
-    }
-    setLikedSongs(nextLikes);
-    localStorage.setItem('regalo_liked_songs', JSON.stringify(nextLikes));
+    await toggleLikeApi(songId, 'cancion');
   };
 
   if (loading) {
