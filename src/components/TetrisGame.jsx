@@ -630,44 +630,42 @@ export default function TetrisGame() {
       </div>
 
       {/* Controles móviles en pantalla (solo visibles en mobile) */}
-      <div className="flex sm:hidden flex-col gap-2 w-full max-w-xl mt-3">
-        <div className="flex justify-between items-center px-4">
+      <div className="flex sm:hidden flex-row justify-between w-full max-w-xl mt-4 px-2 gap-4">
+        {/* Cruceta Izquierda */}
+        <div className="flex gap-1 items-end">
           <button 
-            className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+            className="retro-btn w-12 h-12 flex items-center justify-center select-none touch-none active:scale-95 bg-[#2a223a] border-[#3a324a] text-white"
             onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowLeft'); }}
           >
-            <span className="font-retro text-white text-lg">←</span>
+            <span className="text-xl leading-none">←</span>
           </button>
-          
-          <div className="flex flex-col gap-2">
-            <button 
-              className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
-              onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowUp'); }}
-            >
-              <span className="font-retro text-pastel-pink text-[8px]">ROT</span>
-            </button>
-            <button 
-              className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
-              onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowDown'); }}
-            >
-              <span className="font-retro text-white text-lg">↓</span>
-            </button>
-          </div>
-          
           <button 
-            className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+            className="retro-btn w-12 h-12 flex items-center justify-center select-none touch-none active:scale-95 bg-[#2a223a] border-[#3a324a] text-white"
+            onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowDown'); }}
+          >
+            <span className="text-xl leading-none">↓</span>
+          </button>
+          <button 
+            className="retro-btn w-12 h-12 flex items-center justify-center select-none touch-none active:scale-95 bg-[#2a223a] border-[#3a324a] text-white"
             onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowRight'); }}
           >
-            <span className="font-retro text-white text-lg">→</span>
+            <span className="text-xl leading-none">→</span>
           </button>
         </div>
-        
-        <div className="flex justify-center px-4 mt-2">
+
+        {/* Botones de Acción Derecha */}
+        <div className="flex gap-2 items-end">
           <button 
-            className="w-full py-3 bg-[#2a223a] active:bg-[#3a324a] rounded-xl flex items-center justify-center border-2 border-pastel-pink shadow-md select-none touch-none"
+            className="retro-btn w-14 h-14 flex items-center justify-center select-none touch-none active:scale-95 bg-[#2a223a] border-[#3a324a] text-pastel-pink"
             onPointerDown={(e) => { e.preventDefault(); handleControl('Space'); }}
           >
-            <span className="font-retro text-pastel-pink text-[10px]">DROP</span>
+            <span className="font-retro text-[8px]">DROP</span>
+          </button>
+          <button 
+            className="retro-btn w-14 h-14 flex items-center justify-center select-none touch-none active:scale-95 bg-pastel-pink border-pink-400 text-black mb-4"
+            onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowUp'); }}
+          >
+            <span className="font-retro text-[8px]">ROT</span>
           </button>
         </div>
       </div>

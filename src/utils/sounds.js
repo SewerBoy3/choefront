@@ -166,6 +166,7 @@ export function startTetrisBGM() {
 
     const E5 = 659.25, B4 = 493.88, C5 = 523.25, D5 = 587.33, A4 = 440.00, G4 = 392.00, F4 = 349.23, E4 = 329.63, C4 = 261.63, D4 = 293.66;
     
+    // Korobeiniki (Tetris Theme A)
     const melody = [
       E5, B4, C5, D5, C5, B4, A4, A4, C5, E5, D5, C5, B4, C5, D5, E5, C5, A4, A4,
       D5, F4, A4, D5, C5, B4, C5, E5, D5, C5, B4, C5, D5, E5, C5, A4, A4
@@ -174,7 +175,7 @@ export function startTetrisBGM() {
       4, 2, 2, 4, 2, 2, 4, 2, 2, 4, 2, 2, 6, 2, 4, 4, 4, 4, 8,
       4, 2, 2, 4, 2, 2, 4, 2, 2, 4, 2, 2, 6, 2, 4, 4, 4, 4, 8
     ];
-    const stepMs = 150;
+    const stepMs = 110; // Faster, more energetic
     let noteIndex = 0;
     let nextNoteTime = ctx.currentTime;
 
@@ -189,11 +190,11 @@ export function startTetrisBGM() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc.type = 'triangle';
+      osc.type = noteIndex % 4 === 0 ? 'square' : 'sawtooth';
       osc.frequency.setValueAtTime(freq, nextNoteTime);
       
-      gain.gain.setValueAtTime(0.015, nextNoteTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + duration);
+      gain.gain.setValueAtTime(0.025, nextNoteTime); // Punchier volume
+      gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + duration * 0.9);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -240,15 +241,16 @@ export function startDinoBGM() {
     const ctx = getAudioContext();
     if (dinoBgmInterval) return;
 
-    const C3 = 130.81, D3 = 146.83, E3 = 164.81, G3 = 196.00, A3 = 220.00, C4 = 261.63, D4 = 293.66, E4 = 329.63, G4 = 392.00, A4 = 440.00;
+    // Fast, energetic synthwave / runner bassline
+    const C3 = 130.81, D3 = 146.83, Eb3 = 155.56, F3 = 174.61, G3 = 196.00, Bb3 = 233.08, C4 = 261.63;
     
     const notes = [
-      C3, C4, G3, G4, A3, A4, F3, F4,
-      C3, C4, G3, G4, A3, A4, G3, G4,
-      C3, E4, G3, G4, A3, C4, F3, A4,
-      C3, E4, G3, G4, A3, B3, C4, D4
+      C3, C4, C3, Eb3, C3, F3, C3, G3,
+      C3, C4, C3, Bb3, C3, G3, F3, Eb3,
+      C3, C4, C3, Eb3, C3, F3, C3, G3,
+      C3, C4, C3, D3, Eb3, F3, G3, Bb3
     ];
-    const duration = 0.15;
+    const duration = 0.12; // Very fast 16th notes
 
     let noteIndex = 0;
     let nextNoteTime = ctx.currentTime;
@@ -262,11 +264,11 @@ export function startDinoBGM() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc.type = noteIndex % 2 === 0 ? 'square' : 'triangle';
+      osc.type = 'square';
       osc.frequency.setValueAtTime(freq, nextNoteTime);
       
-      gain.gain.setValueAtTime(0.012, nextNoteTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + duration);
+      gain.gain.setValueAtTime(0.03, nextNoteTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + duration * 0.8);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
