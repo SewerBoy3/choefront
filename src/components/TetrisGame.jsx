@@ -493,71 +493,80 @@ export default function TetrisGame() {
     }
   }, [gameState, earnedPoints]);
 
-  // Teclado
-  useEffect(() => {
+  const handleControl = useCallback((code) => {
     const S = stateRef.current;
-    const onKey = (e) => {
-      if (gameState !== 'PLAYING') {
-        if (e.code === 'Enter' || e.code === 'Space') startGame();
-        return;
-      }
-      switch (e.code) {
-        case 'ArrowLeft':
-          if (fits(S.grid, S.current, -1, 0)) {
-            S.current.x--;
-            playTetrisMove();
-          }
-          break;
-        case 'ArrowRight':
-          if (fits(S.grid, S.current,  1, 0)) {
-            S.current.x++;
-            playTetrisMove();
-          }
-          break;
-        case 'ArrowDown':
-          if (fits(S.grid, S.current, 0, 1)) {
-            S.current.y++;
-            playTetrisMove();
-          } else {
-            S.lastDrop = 0;
-          }
-          break;
-        case 'ArrowUp': case 'KeyX': {
-          const rot = rotateCW(S.current.matrix);
-          const tmp = { ...S.current, matrix: rot };
-          const kicks = [0, 1, -1, 2, -2];
-          let rotated = false;
-          for (const k of kicks) {
-            if (fits(S.grid, tmp, k, 0)) {
-              S.current.matrix = rot;
-              S.current.x += k;
-              rotated = true;
-              break;
-            }
-          }
-          if (rotated) {
-            playTetrisRotate();
-          }
-          break;
+    if (gameState !== 'PLAYING') {
+      if (code === 'Enter' || code === 'Space') startGame();
+      return;
+    }
+    switch (code) {
+      case 'ArrowLeft':
+        if (fits(S.grid, S.current, -1, 0)) {
+          S.current.x--;
+          playTetrisMove();
         }
-        case 'Space': {
-          let dropped = false;
-          while (fits(S.grid, S.current, 0, 1)) {
-            S.current.y++;
-            dropped = true;
-          }
-          if (dropped) {
-            playTetrisMove();
-          }
+        break;
+      case 'ArrowRight':
+        if (fits(S.grid, S.current,  1, 0)) {
+          S.current.x++;
+          playTetrisMove();
+        }
+        break;
+      case 'ArrowDown':
+        if (fits(S.grid, S.current, 0, 1)) {
+          S.current.y++;
+          playTetrisMove();
+        } else {
           S.lastDrop = 0;
-          break;
         }
+        break;
+      case 'ArrowUp': case 'KeyX': {
+        const rot = rotateCW(S.current.matrix);
+        const tmp = { ...S.current, matrix: rot };
+        const kicks = [0, 1, -1, 2, -2];
+        let rotated = false;
+        for (const k of kicks) {
+          if (fits(S.grid, tmp, k, 0)) {
+            S.current.matrix = rot;
+            S.current.x += k;
+            rotated = true;
+            break;
+          }
+        }
+        if (rotated) {
+          playTetrisRotate();
+        }
+        break;
       }
-      render();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+      case 'Space': {
+        let dropped = false;
+        while (fits(S.grid, S.current, 0, 1)) {
+          S.current.y++;
+          dropped = true;
+        }
+        if (dropped) {
+          playTetrisMove();
+        }
+        S.lastDrop = 0;
+        break;
+      }
+    }
+    render();
   }, [gameState, startGame, render]);
+
+  // Teclado
+
+  useEffect(() => {
+    const onKey = (e) => {
+      // Prevent default scrolling for arrow keys and spacebar
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+      }
+      handleControl(e.code);
+    };
+    window.addEventListener('keydown', onKey, { passive: false });
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleControl]);
 
   useEffect(() => {
     return () => {
@@ -617,6 +626,49 @@ export default function TetrisGame() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Controles móviles en pantalla (solo visibles en mobile) */}
+      <div className="flex sm:hidden flex-col gap-2 w-full max-w-xl mt-3">
+        <div className="flex justify-between items-center px-4">
+          <button 
+            className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+            onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowLeft'); }}
+          >
+            <span className="font-retro text-white text-lg">←</span>
+          </button>
+          
+          <div className="flex flex-col gap-2">
+            <button 
+              className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+              onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowUp'); }}
+            >
+              <span className="font-retro text-pastel-pink text-[8px]">ROT</span>
+            </button>
+            <button 
+              className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+              onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowDown'); }}
+            >
+              <span className="font-retro text-white text-lg">↓</span>
+            </button>
+          </div>
+          
+          <button 
+            className="w-14 h-14 bg-[#2a223a] active:bg-[#3a324a] rounded-full flex items-center justify-center border-2 border-slate-600 shadow-md select-none touch-none"
+            onPointerDown={(e) => { e.preventDefault(); handleControl('ArrowRight'); }}
+          >
+            <span className="font-retro text-white text-lg">→</span>
+          </button>
+        </div>
+        
+        <div className="flex justify-center px-4 mt-2">
+          <button 
+            className="w-full py-3 bg-[#2a223a] active:bg-[#3a324a] rounded-xl flex items-center justify-center border-2 border-pastel-pink shadow-md select-none touch-none"
+            onPointerDown={(e) => { e.preventDefault(); handleControl('Space'); }}
+          >
+            <span className="font-retro text-pastel-pink text-[10px]">DROP</span>
+          </button>
         </div>
       </div>
     </div>

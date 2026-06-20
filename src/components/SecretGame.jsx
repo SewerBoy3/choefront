@@ -144,7 +144,7 @@ export default function SecretGame() {
     frame: 0, speed: 3.8, jumpCount: 0,
     hero: { x: 60, y: 0, vy: 0, w: 40, h: 40, onGround: true, spriteFrame: 0 },
     obstacles: [], coins: [],
-    groundY: 160, W: 600, H: 220,
+    groundY: 240, W: 600, H: 300,
     bgX: 0, mountainX: 0, cloudX: 0,
     shakeFrames: 0,
     invincible: 0,
@@ -510,7 +510,7 @@ export default function SecretGame() {
         </div>
 
         <div className="game-canvas-wrap border-4 border-white overflow-hidden">
-          <canvas ref={canvasRef} width={600} height={200} className="w-full block"
+          <canvas ref={canvasRef} width={600} height={300} className="w-full block"
             style={{ imageRendering: 'pixelated', touchAction: 'none' }}
             onClick={jump}
             onTouchStart={(e) => { e.preventDefault(); jump(); }}

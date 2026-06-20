@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Calendar, Music, Gift, Image as ImageIcon, Settings, Book, Coins } from 'lucide-react';
+import { Heart, Calendar, Music, Gift, Image as ImageIcon, Settings, Book, Coins, Menu, X } from 'lucide-react';
 
 import Timeline      from './components/Timeline';
 import MusicRoom     from './components/MusicRoom';
@@ -36,6 +36,7 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
   const [activeTab, setActiveTab] = useState(() => {
     return sessionStorage.getItem('choe_active_tab') || 'timeline';
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const points = useStore((state) => state.points);
 
   const allTabs = [
@@ -60,22 +61,38 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
 
       {/* HEADER */}
       <header className="border-b-4 border-white bg-[#1a1525]/90 backdrop-blur-sm z-40 sticky top-0">
-        <div className="max-w-5xl mx-auto px-3 py-2 flex flex-col items-center gap-2">
-
-          {/* Top bar: user info + mini player + coins + logout */}
+        <div className="max-w-5xl mx-auto px-3 py-2 flex flex-col gap-2">
+          
+          {/* Top bar: user info + mini player + coins + mobile menu toggle */}
           <div className="w-full flex justify-between items-center gap-2">
-            <span className="font-retro text-[6px] text-slate-500 hidden xs:block">
+            <span className="font-retro text-[6px] text-slate-500 hidden sm:block">
               JUGADOR: <span className="text-pastel-pink uppercase">{user?.username}</span>
             </span>
-            <span className="font-retro text-[6px] text-slate-500 xs:hidden uppercase text-pastel-pink">
-              {user?.username}
-            </span>
+            <div className="flex items-center gap-1.5 sm:hidden">
+              <button 
+                onClick={() => { playPop(); setMobileMenuOpen(!mobileMenuOpen); }}
+                className="retro-btn !p-1.5 bg-slate-800 text-white border-2 border-slate-600 active:scale-95"
+              >
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+            </div>
+            
+            {/* Title (Mobile only) */}
+            <motion.div className="flex items-center gap-1.5 sm:hidden"
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}>
+              <Heart className="w-3 h-3 text-pastel-pink fill-pastel-pink animate-pulse" />
+              <h1 className="font-retro text-[8px] text-white tracking-wide">
+                CHOE ♡ SAVE
+              </h1>
+            </motion.div>
+
             <div className="flex items-center gap-1.5">
               <MiniPlayer onOpenMusic={() => handleTab('music')} />
               <div className="flex items-center gap-1 border-2 border-yellow-500/40 bg-yellow-500/10 px-1.5 py-1">
                 <Coins className="w-3 h-3 text-yellow-400" />
                 <span className="font-retro text-[7px] text-yellow-300">{points}</span>
-                <span className="font-retro text-[6px] text-pastel-pink">♡</span>
+                <span className="font-retro text-[6px] text-pastel-pink hidden sm:inline">♡</span>
               </div>
               <MagneticButton
                 onClick={(e) => {
@@ -83,45 +100,86 @@ function MainApp({ user, onLogout, anniversaryDate, onUpdateData, publicSettings
                   playPop();
                   onLogout();
                 }}
-                className="relative z-50 retro-btn text-[6px] py-1 px-2 border border-red-500 bg-red-950/40 text-red-400 hover:bg-red-900/60 shrink-0"
+                className="hidden sm:flex relative z-50 retro-btn text-[6px] py-1 px-2 border border-red-500 bg-red-950/40 text-red-400 hover:bg-red-900/60 shrink-0"
               >
                 SALIR
               </MagneticButton>
             </div>
           </div>
 
-          {/* Title */}
-          <motion.div className="flex items-center gap-2"
+          {/* Title Desktop */}
+          <motion.div className="hidden sm:flex items-center gap-2 justify-center"
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
             <Heart className="w-4 h-4 text-pastel-pink fill-pastel-pink animate-pulse" />
-            <h1 className="font-retro text-[9px] sm:text-[10px] text-white tracking-wide">
+            <h1 className="font-retro text-[10px] text-white tracking-wide">
               PARA CHOE ♡ SAVE FILE 01
             </h1>
             <Heart className="w-4 h-4 text-pastel-pink fill-pastel-pink animate-pulse" />
           </motion.div>
 
-          {/* Navigation tabs — scrollable on mobile */}
-          <nav className="flex gap-1.5 justify-start w-full overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
+          {/* Navigation tabs — Desktop */}
+          <nav className="hidden sm:flex gap-1.5 justify-center w-full pb-1">
             {tabs.map(({ id, name, icon: Icon }) => {
               const active = activeTab === id;
               return (
                 <MagneticButton key={id}
                   onClick={() => handleTab(id)}
                   onMouseEnter={playTick}
-                  className={`snap-start shrink-0 font-retro text-[7px] px-2.5 py-1.5 border-2 flex items-center gap-1 transition-colors duration-100
+                  className={`font-retro text-[7px] px-2.5 py-1.5 border-2 flex items-center gap-1 transition-colors duration-100
                     ${active
                       ? 'bg-white text-black border-black shadow-[2px_2px_0_#000]'
                       : 'bg-transparent text-slate-300 border-slate-600 hover:border-white hover:text-white'}`}>
                   <Icon className="w-3 h-3" />
-                  <span className="hidden sm:inline">{name}</span>
-                  <span className="sm:hidden">{name.charAt(0)}{name.includes('ú') || name.includes('é') || name.includes('á') ? name.slice(1,3) : name.slice(1,2)}</span>
+                  <span>{name}</span>
                 </MagneticButton>
               );
             })}
           </nav>
+
         </div>
+        
+        {/* Mobile menu overlay */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="sm:hidden border-t-2 border-slate-700 bg-[#1a1525] overflow-hidden"
+            >
+              <nav className="flex flex-col p-2 space-y-1">
+                {tabs.map(({ id, name, icon: Icon }) => {
+                  const active = activeTab === id;
+                  return (
+                    <button key={id}
+                      onClick={() => { handleTab(id); setMobileMenuOpen(false); }}
+                      className={`font-retro text-[8px] p-3 border-2 text-left flex items-center gap-2 transition-colors duration-100
+                        ${active
+                          ? 'bg-white text-black border-black shadow-[2px_2px_0_#000]'
+                          : 'bg-[#2a223a] text-slate-300 border-slate-700 hover:border-pastel-pink'}`}>
+                      <Icon className="w-4 h-4" />
+                      <span>{name}</span>
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playPop();
+                    onLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="font-retro text-[8px] p-3 border-2 border-red-500 bg-red-950/40 text-red-400 text-left flex items-center gap-2 mt-2"
+                >
+                  <X className="w-4 h-4" />
+                  <span>CERRAR SESIÓN</span>
+                </button>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* CONTENIDO */}
